@@ -1,0 +1,4 @@
+pysocks
+httpx
+requests
+colorama
