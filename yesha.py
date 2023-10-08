@@ -1,3 +1,6 @@
+#coded by yesha
+#1m request got down deped with tls
+#created on 9/11/23
 from shutil import which
 from urllib import parse
 from os import system
@@ -70,7 +73,7 @@ class Home:
       {Color.LB} ░░░██║░░░██║░░██║██║░░██║██║░░░░░
       {Color.LC} ░░░██║░░░╚█████╔╝╚█████╔╝███████╗
 	  {Color.LB} ░░░╚═╝░░░░╚════╝░░╚════╝░╚══════╝
-	{Color.LR}[{Color.LG}>     Made By Philippines alliance  {Color.LG}<{Color.LR}]""")
+	{Color.LR}[{Color.LG}>     Made By Yesha  {Color.LG}<{Color.LR}]""")
 		print(Color.LC+"    Type "+Color.LB+"'HELP'"+Color.LC+" to see all commands\n\n")
 		print(Color.LR+"["+Color.LG+"01"+Color.LR+"]"+Color.LC+" Proxy")
 		print(Color.LR+"["+Color.LG+"02"+Color.LR+"]"+Color.LC+" WebTool")
@@ -590,7 +593,7 @@ class Tool:
 		print(Color.LR+"["+Color.LG+"00"+Color.LR+"]"+Color.LC+" Return")
 		print("\n")
 		while True:
-			sys.stdout.write(Color.LB+"╔═══"+Color.LR+"["+Color.LG+"Ddostool"+Color.LB+"@"+Color.LG+"Layer7"+Color.LR+"]"+Color.LB+"\n╚══> "+Color.RESET)
+			sys.stdout.write(Color.LB+"╔═══"+Color.LR+"["+Color.LG+"Yesha"+Color.LB+"@"+Color.LG+"Layer7"+Color.LR+"]"+Color.LB+"\n╚══> "+Color.RESET)
 			option = input()
 			if option in ['01', '1']:
 				try:
@@ -690,8 +693,8 @@ if __name__ == '__main__':
 {Color.LC}BBOS{Color.LR} ~> {Color.LY}L4/L7 DDOS Attack
 {Color.LC}STOP{Color.LR} ~> {Color.LY}Stop your Attack
 {Color.LC}DEV{Color.LR} ~> {Color.LY}Contact/Support dev"""
-	dev = f"""{Color.LC}Telegram{Color.LR}: {Color.LY} unknown
-{Color.LC}Momo{Color.LR}: {Color.LY}🖕😂🖕"""
+	dev = f"""{Color.LC}Facebook{Color.LR}: {Color.LY}Yesha peñares
+{Color.LC}Momo{Color.LR}: {Color.LY}"""
 	F_Tool = Home(commands, dev)
 	Tool = Tool(commands, dev, spoof_useragents())
 	try:open('ddostool.py');main()
